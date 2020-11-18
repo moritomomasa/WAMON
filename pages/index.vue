@@ -1,5 +1,6 @@
 <template>
     <div id="app">
+      <a @click="$router.push('dbtest')">トップへ</a>
       <h1 class="title">承認<span class="blue">欲求</span></h1>
       <h2 class="subtitle">あなたの欲望をいまここで</h2>
 
