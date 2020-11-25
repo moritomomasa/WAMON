@@ -42,11 +42,11 @@ html {
   padding: 10px 30px;
   margin-left: 15px;
 }
-
 .button--grey-talk:hover {
   color: #fff;
   background-color: #ffa500;
 }
+
 .button--grey-listen {
   display: inline-block;
   border-radius: 4px;
@@ -56,12 +56,26 @@ html {
   padding: 10px 30px;
   margin-left: 15px;
 }
-
 .button--grey-listen:hover {
   color: #fff;
   background-color: #ffa500;
 }
 .button--grey-push {
+  color: #fff;
+  background-color: #ffa500;
+  padding: 10px 30px;
+  margin-left: 15px;
+}
+.button {
+  display: inline-block;
+  border-radius: 4px;
+  border: 1px solid #ffffff;
+  color: #ffa500;
+  text-decoration: none;
+  padding: 10px 30px;
+  margin-left: 15px;  
+}
+.button:hover {
   color: #fff;
   background-color: #ffa500;
 }

@@ -1,6 +1,5 @@
 <template>
     <div id="app">
-      <a @click="$router.push('dbtest')">トップへ</a>
       <h1 class="title">承認<span class="blue">欲求</span></h1>
       <h2 class="subtitle">あなたの欲望をいまここで</h2>
 
@@ -15,7 +14,6 @@
                  aria-describedby="emailHelp"
                  placeholder="name" />
           {{ name.length }}/10
-          <p>{{ name }} さん！！</p>
         </span>
         <div class="links">
           <span id="listen">
@@ -33,9 +31,6 @@
                    style="width: 100px; height: 55px; font-size: 20px" />
           </span>
         </div>
-        <div>
-          <p>{{ type }} モード</p>
-        </div>
         <div class="start">
           <p>
             <input type="button"
@@ -51,6 +46,8 @@
 </template>
 
 <script>
+  import firebase from '@/plugins/firebase'
+
   export default {
 
     components: {},
