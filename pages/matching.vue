@@ -67,7 +67,6 @@
         userState: 'waiting',
         opponentKey: '',
         debug: '',
-
       }
     },
     methods: {
@@ -91,7 +90,6 @@
       makeCall:　function () {
         const call = this.peer.call(this.calltoid, this.localStream);
         this.connect(call);
-
       },
       //相手のaudio,videoの取得
       connect: function (call) {
@@ -165,7 +163,6 @@
       deviceInfos
       .filter(deviceInfo => deviceInfo.kind === 'videoinput')
       .map(video => this.videos.push({text: video.label || 'Camera' + (this.videos.length + 1), value: video.deviceId}));
-
       this.peer = new Peer({
         key: this.APIKey,
         debug: 3,
@@ -175,7 +172,6 @@
         //データベース挿入
         this.Ref.push({
           name: this.userName,
-          type: this.userType,
           peerId: this.peerId,
           state: this.userState
         });
@@ -184,7 +180,6 @@
         call.answer(this.localStream);
         this.connect(call);
       });
-
       this.searchOpponent();
     },
   })
