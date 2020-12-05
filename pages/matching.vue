@@ -147,9 +147,10 @@
           this.Ref.child(key).remove();
         }
       },
-      // 切断
+      // 切断ボタン
       disconnect: function () {
         window.close()
+      firebase.database().ref(this.peerId).remove();
       }
     },
     mounted: async function () {
@@ -170,10 +171,10 @@
       this.peer.on('open', () => {
         this.peerId = this.peer.id
         //データベース挿入
-        this.Ref.push({
+        firebase.database().ref(this.userType + '/' + this.peerId).set({
           name: this.userName,
           peerId: this.peerId,
-          state: this.userState
+
         });
       });
       this.peer.on('call', call => {
