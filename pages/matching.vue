@@ -34,10 +34,10 @@
             <div class="room-info">
               <a>【Your id: <span id="my-id">{{peerId}}</span>】</a>
               <a>【Opponent id: <span id="opponent-id">{{calltoid}}</span>】</a>
-              <a>【Opponent key: <span id="opponent-id">{{opponentKey}}</span>】</a>
+              <a>【Opponent type: <span id="opponent-id">{{opponentType}}</span>】</a>
             </div>
             <textarea v-model="calltoid" placeholder="相手のID"></textarea>
-            <button @click="removeData(peerId)" class="button">データ削除</button>
+            <button @click="removeData(userType, peerId)" class="button">データ削除</button>
             <button @click="makeCall" class="button">接続</button>
             <button @click="disconnect" class="button">切断</button>
           </div>
@@ -62,20 +62,21 @@
         audios: [],
         videos: [],
         localStream: null,
+        //あなたの情報
         peerId: '',
-        calltoid: '',
         userName: this.$route.query.name,
         userType: this.$route.query.type,
-        userState: 'waiting',
-        opponentKey: '',
+        //相手の情報
+        calltoid: '',
+        opponentName: '',
+        opponentType: '',
       }
     },
     methods: {
       //audio,videoの変更
       onChange: function () {
-        if (this.selectedAudio != '' && this.selectedVideo != '') {
-          this.connectLocalCamera();
-        }
+        this.connectLocalCamera();
+        this.makeCall();
       },
       //audio,videoの接続
       connectLocalCamera: async function () {
@@ -104,24 +105,26 @@
       searchOpponent: async function (){
         let getId = 'null';
         let getKey = 'null';
+        let getType = 'null';
+
         if(this.userType == 'talk'){
-            await firebase.database().ref().startAt('listen').endAt('listen')
+            await firebase.database().ref('listen')
               .once('value',function(snapshot) {
                 snapshot.forEach(function (childSnapshot) {
                   const value = childSnapshot.val();
-                  getKey = childSnapshot.key;
-                  getId = value.peerId;
+                  getId = childSnapshot.key;
+                  getType = 'listen';
                   return;
                 });
               });
         }
         else if(this.userType == 'listen'){
-            await firebase.database().ref().startAt('talk').endAt('talk')
+            await firebase.database().ref('talk')
               .once('value',function(snapshot) {
                 snapshot.forEach(function (childSnapshot) {
                   const value = childSnapshot.val();
-                  getKey = childSnapshot.key;
-                  getId = value.key.peerId;
+                  getId = childSnapshot.key;
+                  getType = 'talk';
                   return;
                 });
               });
@@ -130,16 +133,17 @@
             console.log('Type does not exist');
         }
         this.calltoid =　getId;
-        this.opponentKey = getKey;
+        this.opponentType = getType;
+
         if(this.calltoid != 'null'){
           this.makeCall();
-          this.removeData(this.peerId);
-          this.removeData(getId);
+          this.removeData(this.userType, this.peerId);
+          this.removeData(this.opponentType, getId);
         }
       },
       //データの削除
-      removeData: function (id) {
-        firebase.database().ref(this.userType + '/' + id).remove();
+      removeData: function (type, id) {
+        firebase.database().ref(type + '/' + id).remove();
       },
       // 切断ボタン
       disconnect: function () {
