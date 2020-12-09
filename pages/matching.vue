@@ -13,6 +13,7 @@
 
         <div>
           <div class="main">
+            <div class="audio">
             マイク:
             <select v-model="selectedAudio" @change="onChange">
               <option disabled value="">Please select one</option>
@@ -28,14 +29,16 @@
                 {{ video.text }}
               </option>
             </select>
-
-            <div>
-              <p>Your id: <span id="my-id">{{peerId}}</span></p>
-              <p>Opponent id: <span id="opponent-id">{{calltoid}}</span></p>
-              <p>他のブラウザでこのIDをコールしましょう。</p>
-              <h3>debug:{{debug}}</h3>
-              <button @click="makeCall" class="button">Call</button>
             </div>
+
+            <div class="room-info">
+              <a>【Your id: <span id="my-id">{{peerId}}</span>】</a>
+              <a>【Opponent id: <span id="opponent-id">{{calltoid}}</span>】</a>
+              <a>【Opponent key: <span id="opponent-id">{{opponentKey}}</span>】</a>
+            </div>
+            <textarea v-model="calltoid" placeholder="相手のID"></textarea>
+            <button @click="removeData(peerId)" class="button">データ削除</button>
+            <button @click="makeCall" class="button">接続</button>
             <button @click="disconnect" class="button">切断</button>
           </div>
 
@@ -53,7 +56,6 @@
     },
     data() {
       return {
-        Ref: '',
         APIKey: '088ef9b7-e969-44b6-8236-135f33b51e61',
         selectedAudio: '',
         selectedVideo: '',
@@ -66,7 +68,6 @@
         userType: this.$route.query.type,
         userState: 'waiting',
         opponentKey: '',
-        debug: '',
       }
     },
     methods: {
@@ -97,8 +98,6 @@
           const el = document.getElementById('opponent-video');
           el.srcObject = stream;
           el.play();
-          this.debug = 'remove';
-          this.removeData(this.opponentKey);
         });
       },
       //相手を探す
@@ -106,28 +105,24 @@
         let getId = 'null';
         let getKey = 'null';
         if(this.userType == 'talk'){
-            await this.Ref.orderByChild('type').startAt('listen').endAt('listen')
+            await firebase.database().ref().startAt('listen').endAt('listen')
               .once('value',function(snapshot) {
                 snapshot.forEach(function (childSnapshot) {
                   const value = childSnapshot.val();
                   getKey = childSnapshot.key;
-                  if(value.state == 'waiting'){
-                    getId = value.peerId;
-                    return;
-                  }
+                  getId = value.peerId;
+                  return;
                 });
               });
         }
         else if(this.userType == 'listen'){
-            await this.Ref.orderByChild('type').startAt('talk').endAt('talk')
+            await firebase.database().ref().startAt('talk').endAt('talk')
               .once('value',function(snapshot) {
                 snapshot.forEach(function (childSnapshot) {
                   const value = childSnapshot.val();
                   getKey = childSnapshot.key;
-                  if(value.state == 'waiting'){
-                    getId = value.key.peerId;
-                    return;
-                  }
+                  getId = value.key.peerId;
+                  return;
                 });
               });
         }
@@ -137,25 +132,22 @@
         this.calltoid =　getId;
         this.opponentKey = getKey;
         if(this.calltoid != 'null'){
-          this.debug = 'makecall';
           this.makeCall();
+          this.removeData(this.peerId);
+          this.removeData(getId);
         }
       },
       //データの削除
-      removeData: function (key) {
-        if(data != 'null'){
-          this.Ref.child(key).remove();
-        }
+      removeData: function (id) {
+        firebase.database().ref(this.userType + '/' + id).remove();
       },
       // 切断ボタン
       disconnect: function () {
         window.close()
-      firebase.database().ref(this.peerId).remove();
       }
     },
     mounted: async function () {
       const deviceInfos = (await navigator.mediaDevices.enumerateDevices());
-      this.Ref = firebase.database().ref();
       //オーディオデバイス取得
       deviceInfos
       .filter(deviceInfo => deviceInfo.kind === 'audioinput')
@@ -164,6 +156,7 @@
       deviceInfos
       .filter(deviceInfo => deviceInfo.kind === 'videoinput')
       .map(video => this.videos.push({text: video.label || 'Camera' + (this.videos.length + 1), value: video.deviceId}));
+      
       this.peer = new Peer({
         key: this.APIKey,
         debug: 3,
@@ -173,8 +166,6 @@
         //データベース挿入
         firebase.database().ref(this.userType + '/' + this.peerId).set({
           name: this.userName,
-          peerId: this.peerId,
-
         });
       });
       this.peer.on('call', call => {
@@ -211,5 +202,11 @@
       .opponent-screen {
         float: right;
         margin: 0px;
+      }
+      .audio {
+        margin-bottom: 20px;
+      }
+      .room-info {
+        margin-bottom: 20px;
       }
     </style>
