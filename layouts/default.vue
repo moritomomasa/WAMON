@@ -26,7 +26,7 @@ html {
 }
 
 .container {
-  min-height: 100vh;
+  min-height: 80vh;
   display: flex;
   justify-content: center;
   align-items: center;
@@ -40,7 +40,6 @@ html {
   color: #ffa500;
   text-decoration: none;
   padding: 10px 30px;
-  margin-left: 15px;
 }
 .button--grey-talk:hover {
   color: #fff;
@@ -54,7 +53,6 @@ html {
   color: #ffa500;
   text-decoration: none;
   padding: 10px 30px;
-  margin-left: 15px;
 }
 .button--grey-listen:hover {
   color: #fff;
@@ -64,7 +62,6 @@ html {
   color: #fff;
   background-color: #ffa500;
   padding: 10px 30px;
-  margin-left: 15px;
 }
 .button {
   display: inline-block;
@@ -73,7 +70,6 @@ html {
   color: #ffa500;
   text-decoration: none;
   padding: 10px 30px;
-  margin-left: 15px;  
 }
 .button:hover {
   color: #fff;

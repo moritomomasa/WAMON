@@ -7,38 +7,16 @@
           <video id="my-video" width="400px" autoplay muted playsinline></video>
         </div>
         <div class="opponent-screen">
-          <video id="opponent-video" width="400" autoplay playsinline></video>
+          <video id="opponent-video" width="400" auotplay playsinline></video>
         </div>
       </div>
 
         <div>
           <div class="main">
-            <div class="audio">
-            マイク:
-            <select v-model="selectedAudio" @change="onChange">
-              <option disabled value="">Please select one</option>
-              <option v-for="(audio, key, index) in audios" v-bind:key="index" :value="audio.value">
-                {{ audio.text }}
-              </option>
-            </select>
-
-            カメラ:
-            <select v-model="selectedVideo" @change="onChange">
-              <option disabled value="">Please select one</option>
-              <option v-for="(video, key, index) in videos" v-bind:key="index" :value="video.value">
-                {{ video.text }}
-              </option>
-            </select>
-            </div>
-
             <div class="room-info">
-              <a>【Your id: <span id="my-id">{{peerId}}</span>】</a>
-              <a>【Opponent id: <span id="opponent-id">{{calltoid}}</span>】</a>
-              <a>【Opponent type: <span id="opponent-id">{{opponentType}}</span>】</a>
+              <a>【Your id: <span id="my-id">{{you.peerId}}</span>】</a>
+              <a>【Opponent id: <span id="opponent-id">{{opponent.peerId}}</span>】</a>
             </div>
-            <textarea v-model="calltoid" placeholder="相手のID"></textarea>
-            <button @click="removeData(userType, peerId)" class="button">データ削除</button>
-            <button @click="makeCall" class="button">接続</button>
             <button @click="disconnect" class="button">切断</button>
           </div>
 
@@ -50,26 +28,31 @@
 
 <script>
   import firebase from '@/plugins/firebase'
-  import Peer from 'skyway-js';
+  import Peer from 'skyway-js'
+
   export default({
     components: {
     },
     data() {
       return {
         APIKey: '088ef9b7-e969-44b6-8236-135f33b51e61',
-        selectedAudio: '',
-        selectedVideo: '',
+        selectedAudio: this.$route.query.audio,
+        selectedVideo: this.$route.query.video,
         audios: [],
         videos: [],
         localStream: null,
         //あなたの情報
-        peerId: '',
-        userName: this.$route.query.name,
-        userType: this.$route.query.type,
+        you: {
+          peerId: '',
+          name: this.$route.query.name,
+          type: this.$route.query.type,
+        },
         //相手の情報
-        calltoid: '',
-        opponentName: '',
-        opponentType: '',
+        opponent: {
+          peerId: '',
+          name: '',
+          type: '',
+        },
       }
     },
     methods: {
@@ -82,7 +65,7 @@
       connectLocalCamera: async function () {
         const constraints = {
           audio: this.selectedAudio ? { deviceId: { exact: this.selectedAudio } } : true,
-          video: this.selectedVideo ? { deviceId: { exact: this.selectedVideo } } : true
+          //video: this.selectedVideo ? { deviceId: { exact: this.selectedVideo } } : false
         }
         const stream = await navigator.mediaDevices.getUserMedia(constraints);
         document.getElementById('my-video').srcObject = stream;
@@ -90,7 +73,7 @@
       },
       //マッチング
       makeCall:　function () {
-        const call = this.peer.call(this.calltoid, this.localStream);
+        const call = this.peer.call(this.opponent.peerId, this.localStream);
         this.connect(call);
       },
       //相手のaudio,videoの取得
@@ -107,7 +90,7 @@
         let getKey = 'null';
         let getType = 'null';
 
-        if(this.userType == 'talk'){
+        if(this.you.type == 'talk'){
             await firebase.database().ref('listen')
               .once('value',function(snapshot) {
                 snapshot.forEach(function (childSnapshot) {
@@ -118,7 +101,7 @@
                 });
               });
         }
-        else if(this.userType == 'listen'){
+        else if(this.you.type == 'listen'){
             await firebase.database().ref('talk')
               .once('value',function(snapshot) {
                 snapshot.forEach(function (childSnapshot) {
@@ -129,52 +112,70 @@
                 });
               });
         }
-        else{
-            console.log('Type does not exist');
-        }
-        this.calltoid =　getId;
-        this.opponentType = getType;
+        this.opponent.peerId =　getId
+        this.opponent.type = getType
 
-        if(this.calltoid != 'null'){
-          this.makeCall();
-          this.removeData(this.userType, this.peerId);
-          this.removeData(this.opponentType, getId);
+        if(this.opponent.peerId != 'null'){
+          this.setMatchingData()
+          this.makeCall()
+          this.removeData(this.you.type, this.you.peerId)
+          this.removeData(this.opponent.type, this.opponent.peerId)
         }
       },
-      //データの削除
+      setOpponentPeerId:async function () {
+        const yourId = this.you.peerId
+        let opponentId
+        await firebase.database().ref('matching').once('value',function(snapshot) {
+          snapshot.forEach(function (childSnapshot) {
+          const val = childSnapshot.val();
+          console.log(val)
+          if(val.opponent == yourId){
+            opponentId = childSnapshot.key;
+          }
+          return;
+          });
+        });
+        this.opponent.peerId = opponentId
+      },
+      setMatchingData: function () {
+        firebase.database().ref('matching/' + this.you.peerId).set({
+          opponent: this.opponent.peerId
+        });
+      },
+      //データベースの削除
       removeData: function (type, id) {
         firebase.database().ref(type + '/' + id).remove();
       },
+      //データベースのフェッチ
+      fetchData: function (type, id) {
+      },
       // 切断ボタン
-      disconnect: function () {
-        window.close()
+      disconnect:async function () {
+        await firebase.database().ref('matching/' + this.you.peerId).remove();
+        await firebase.database().ref('matching/' + this.opponent.peerId).remove();
+        this.$router.replace('/')
       }
     },
-    mounted: async function () {
-      const deviceInfos = (await navigator.mediaDevices.enumerateDevices());
-      //オーディオデバイス取得
-      deviceInfos
-      .filter(deviceInfo => deviceInfo.kind === 'audioinput')
-      .map(audio => this.audios.push({text: audio.label || 'Microphone' + (this.audios.length + 1), value: audio.deviceId}));
-      //カメラ取得
-      deviceInfos
-      .filter(deviceInfo => deviceInfo.kind === 'videoinput')
-      .map(video => this.videos.push({text: video.label || 'Camera' + (this.videos.length + 1), value: video.deviceId}));
-      
+    mounted: async function () {  
+      this.connectLocalCamera()
+
+      //①peerkey取得
       this.peer = new Peer({
         key: this.APIKey,
         debug: 3,
       });
+      //②固有のid取得
       this.peer.on('open', () => {
-        this.peerId = this.peer.id
-        //データベース挿入
-        firebase.database().ref(this.userType + '/' + this.peerId).set({
-          name: this.userName,
+        this.you.peerId = this.peer.id
+        firebase.database().ref(this.you.type + '/' + this.you.peerId).set({
+          name: this.you.name,
         });
       });
+      //接続された側のみ実行
       this.peer.on('call', call => {
         call.answer(this.localStream);
         this.connect(call);
+        this.setOpponentPeerId();
       });
       this.searchOpponent();
     },
