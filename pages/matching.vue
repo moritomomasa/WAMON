@@ -44,7 +44,7 @@
     },
     data() {
       return {
-        APIKey: '088ef9b7-e969-44b6-8236-135f33b51e61',
+        APIKey: 'cdcf59b1-9f67-452d-a607-18fc887dc36c',
         selectedAudio: this.$route.query.audio,
         selectedVideo: this.$route.query.video,
         audios: [],
