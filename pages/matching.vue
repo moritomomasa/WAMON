@@ -2,25 +2,34 @@
   <client-only>
     <slick>
     <div id="app">
-      <div class="container">
-        <div class="my-screen">
-          <video id="my-video" width="400px" autoplay muted playsinline></video>
-        </div>
-        <div class="opponent-screen">
-          <video id="opponent-video" width="400" auotplay playsinline></video>
-        </div>
+      <div id="Loading" style="display:block">
+            <img src="../img/loading.gif" class="loadimg">
+           <p class="loadmsg">
+              処理中...<br>
+              しばらくお待ち下さい。
+            </p>
+            <div>
+              <div class="main">
+                <button @click="disconnect" class="button">切断</button>
+                <button @click="ToMatch" class="button">切り替え</button>
+              </div>
+
+            </div>
+      </div>
+      <div id="matching" style="display:none">
+            <div>
+              <div class="main">
+                <div class="room-info">
+                  <a>【Your id: <span id="my-id">{{you.peerId}}</span>】</a>
+                  <a>【Opponent id: <span id="opponent-id">{{opponent.peerId}}</span>】</a>
+                </div>
+                <button @click="disconnect" class="button">切断</button>
+                <button @click="ToWait" class="button">切り替え</button>
+              </div>
+
+            </div>
       </div>
 
-        <div>
-          <div class="main">
-            <div class="room-info">
-              <a>【Your id: <span id="my-id">{{you.peerId}}</span>】</a>
-              <a>【Opponent id: <span id="opponent-id">{{opponent.peerId}}</span>】</a>
-            </div>
-            <button @click="disconnect" class="button">切断</button>
-          </div>
-
-        </div>
     </div>
     </slick>
   </client-only>
@@ -153,8 +162,17 @@
       disconnect:async function () {
         await firebase.database().ref('matching/' + this.you.peerId).remove();
         await firebase.database().ref('matching/' + this.opponent.peerId).remove();
-        this.$router.replace('/')
-      }
+        this.$router.replace('/');
+        this.removeData(this.you.type, this.you.peerId);
+      },
+      ToMatch:async function () {//テスト用 切り替えボタンも消す
+          document.getElementById("Loading").style.display = "none";
+          document.getElementById("matching").style.display = "block";
+      },
+      ToWait:async function () {//テスト用
+          document.getElementById("Loading").style.display = "block";
+          document.getElementById("matching").style.display = "none";
+      },
     },
     mounted: async function () {
       this.connectLocalCamera()
