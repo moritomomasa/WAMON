@@ -12,7 +12,7 @@
                  placeholder="ニックネーム" />
           {{ name.length }}/10
         </span>
-        
+
         <div class="audio">
           入力デバイス:
           <select v-model="selectedAudio" @change="">
@@ -46,22 +46,22 @@
                    style="width: 100px; height: 55px; font-size: 20px" />
           </span>
         </div>
-  
+
         <div class="start">
           <input type="submit"
                  v-if="!isWaiting"
                  id="button--grey"
                  target="_blank"
                  value="マッチング開始"
-                 style="width: 340px; height: 55px; font-size: 20px" />     
+                 style="width: 340px; height: 55px; font-size: 20px" />
           <input type="submit"
                  v-if="isWaiting"
                  id="button--grey"
                  target="_blank"
                  value="待機中..."
-                 style="width: 340px; height: 55px; font-size: 20px" />  
+                 style="width: 340px; height: 55px; font-size: 20px" />
           <p v-if="!error" class="error">&nbsp;</p>
-          <p v-if="error" class="error" style="color: red">入力に不備があります</p>       
+          <p v-if="error" class="error" style="color: red">入力に不備があります</p>
         </div>
       </form>
     </div>

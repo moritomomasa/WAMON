@@ -156,7 +156,7 @@
         this.$router.replace('/')
       }
     },
-    mounted: async function () {  
+    mounted: async function () {
       this.connectLocalCamera()
 
       //①peerkey取得
