@@ -21,13 +21,6 @@
               {{ audio.text }}
             </option>
           </select>
-          入力カメラ:
-          <select v-model="selectedVideo" @change="">
-            <option disabled value="">未選択</option>
-            <option v-for="(video, key, index) in videos" v-bind:key="index" :value="video.value">
-              {{ video.text }}
-            </option>
-          </select>
         </div>
 
         <div class="links">
@@ -69,7 +62,6 @@
 
 <script>
   export default {
-
     components: {},
     data() {
       return {
@@ -115,8 +107,7 @@
       moveToMatching: function() {
         if(this.isWaiting == true){
           var link = "matching?type=" + this.type + "&name=" + this.name +
-                     "&audio=" + this.selectedAudio +
-                     "&video=" + this.selectedVideo;
+                     "&audio=" + this.selectedAudio;
           this.$router.replace(link)
         }
       },
@@ -128,9 +119,9 @@
       .filter(deviceInfo => deviceInfo.kind === 'audioinput')
       .map(audio => this.audios.push({text: audio.label || 'Microphone' + (this.audios.length + 1), value: audio.deviceId}));
       //カメラ取得
-      deviceInfos
-      .filter(deviceInfo => deviceInfo.kind === 'videoinput')
-      .map(video => this.videos.push({text: video.label || 'Camera' + (this.videos.length + 1), value: video.deviceId}));
+      //deviceInfos
+      //.filter(deviceInfo => deviceInfo.kind === 'videoinput')
+      //.map(video => this.videos.push({text: video.label || 'Camera' + (this.videos.length + 1), value: video.deviceId}));
     }
   };
 </script>
@@ -145,11 +136,9 @@
     letter-spacing: 1px;
     font-size: 6em;
   }
-
   .blue {
     color: #4169e1;
   }
-
   .subtitle {
     font-weight: 300;
     font-size: 3em;
@@ -157,24 +146,19 @@
     word-spacing: 5px;
     padding-bottom: 15px;
   }
-
   .links {
     padding-top: 15px;
     padding-bottom: 15px;
   }
-
   .form {
     width: 70%;
     margin: auto;
   }
-
   .name {
   }
-
   .form-control {
     font-size: 25px;
   }
-
   .audio {
     padding: 10px;
     margin-bottom: 0px;
