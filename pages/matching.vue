@@ -51,11 +51,7 @@
       return {
         APIKey: 'cdcf59b1-9f67-452d-a607-18fc887dc36c',
         selectedAudio: this.$route.query.audio,
-<<<<<<< HEAD
-        //selectedVideo: this.$route.query.video,
-=======
         selectedVideo: null,
->>>>>>> c020eb8bdece0947c559444021aaaf647556bd03
         audios: [],
         videos: [],
         localStream: null,
