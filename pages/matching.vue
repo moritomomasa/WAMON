@@ -2,33 +2,38 @@
   <client-only>
     <slick>
     <div id="app">
+      <!--オーディオ-->
+      <audio id="audio"></audio>
+
+      <div class="switching-part">
+      <!--マッチ相手探し中に表示-->
       <div id="Loading" style="display:block">
-            <img src="../img/loading.gif" class="loadimg">
-           <p class="loadmsg">
-              処理中...<br>
-              しばらくお待ち下さい。
-            </p>
-            <div>
-              <div class="main">
-                <button @click="disconnect" class="button">切断</button>
-                <button @click="ToMatch" class="button">切り替え</button>
-              </div>
-
-            </div>
+        <img src="../img/loading.gif" class="loadimg">
+        <p class="loadmsg">
+          マッチング相手を探しています...
+        </p>
       </div>
+
+      <!--マッチング中に表示-->
       <div id="matching" style="display:none">
-            <div>
-              <div class="main">
-                <div class="room-info">
-                  <a>【Your id: <span id="my-id">{{you.peerId}}</span>】</a>
-                  <a>【Opponent id: <span id="opponent-id">{{opponent.peerId}}</span>】</a>
-                </div>
-                <button @click="disconnect" class="button">切断</button>
-                <button @click="ToWait" class="button">切り替え</button>
-              </div>
-
+        <div class="main">
+          <div class="room-info">
+            <div v-if="you.type == 'listen'">
+              <div style="float:left">【あなた({{you.name}})】</div>
+              <div style="float:right">【あいて({{opponent.name}})】</div>
             </div>
+            <div v-else>
+              <div style="float:right">【あなた({{you.name}})】</div>
+              <div style="float:left">【あいて({{opponent.name}})】</div>
+            </div>
+            <div class="matching-now">通話中．．．</div>
+          </div>
+        </div>
       </div>
+      </div>
+
+      <!--切断ボタン-->
+      <button @click="disconnect" class="button">切断</button>
 
     </div>
     </slick>
@@ -46,7 +51,7 @@
       return {
         APIKey: '088ef9b7-e969-44b6-8236-135f33b51e61',
         selectedAudio: this.$route.query.audio,
-        selectedVideo: this.$route.query.video,
+        selectedVideo: null,
         audios: [],
         videos: [],
         localStream: null,
@@ -74,10 +79,10 @@
       connectLocalCamera: async function () {
         const constraints = {
           audio: this.selectedAudio ? { deviceId: { exact: this.selectedAudio } } : true,
-          //video: this.selectedVideo ? { deviceId: { exact: this.selectedVideo } } : false
+          video: this.selectedVideo ? { deviceId: { exact: this.selectedVideo } } : false
         }
         const stream = await navigator.mediaDevices.getUserMedia(constraints);
-        document.getElementById('my-video').srcObject = stream;
+        //document.getElementById('my-video').srcObject = stream;
         this.localStream = stream;
       },
       //マッチング
@@ -88,7 +93,7 @@
       //相手のaudio,videoの取得
       connect: function (call) {
         call.on('stream', stream => {
-          const el = document.getElementById('opponent-video');
+          const el = document.getElementById('audio');
           el.srcObject = stream;
           el.play();
         });
@@ -96,6 +101,7 @@
       //相手を探す
       searchOpponent: async function (){
         let getId = 'null';
+        let getName;
         let getKey = 'null';
         let getType = 'null';
 
@@ -105,6 +111,7 @@
                 snapshot.forEach(function (childSnapshot) {
                   const value = childSnapshot.val();
                   getId = childSnapshot.key;
+                  getName = value.name;
                   getType = 'listen';
                   return;
                 });
@@ -116,54 +123,63 @@
                 snapshot.forEach(function (childSnapshot) {
                   const value = childSnapshot.val();
                   getId = childSnapshot.key;
+                  getName = value.name;
                   getType = 'talk';
                   return;
                 });
               });
         }
         this.opponent.peerId =　getId
+        this.opponent.name =　getName
         this.opponent.type = getType
 
+        //相手がいたら
         if(this.opponent.peerId != 'null'){
           this.setMatchingData()
           this.makeCall()
           this.removeData(this.you.type, this.you.peerId)
           this.removeData(this.opponent.type, this.opponent.peerId)
+          this.ToMatch()
         }
       },
-      setOpponentPeerId:async function () {
+      getOpponentInfo:async function () {
         const yourId = this.you.peerId
-        let opponentId
+        let opponentId,opponentName
         await firebase.database().ref('matching').once('value',function(snapshot) {
           snapshot.forEach(function (childSnapshot) {
           const val = childSnapshot.val();
-          console.log(val)
-          if(val.opponent == yourId){
+          console.log(val.name);
+          if(val.id == yourId){
             opponentId = childSnapshot.key;
+            opponentName = val.name;
           }
           return;
           });
         });
         this.opponent.peerId = opponentId
+        this.opponent.name = opponentName
       },
-      setMatchingData: function () {
-        firebase.database().ref('matching/' + this.you.peerId).set({
-          opponent: this.opponent.peerId
-        });
+      setMatchingData:async function () {
+        if(this.you.peerId) {
+          await firebase.database().ref('matching/' + this.you.peerId).set({
+            id: this.opponent.peerId,
+            name: this.you.name
+          });
+        }
       },
       //データベースの削除
       removeData: function (type, id) {
         firebase.database().ref(type + '/' + id).remove();
       },
-      //データベースのフェッチ
+      //データベースの取得
       fetchData: function (type, id) {
       },
       // 切断ボタン
       disconnect:async function () {
         await firebase.database().ref('matching/' + this.you.peerId).remove();
         await firebase.database().ref('matching/' + this.opponent.peerId).remove();
-        this.$router.replace('/');
         this.removeData(this.you.type, this.you.peerId);
+        location.replace('/');
       },
       ToMatch:async function () {//テスト用 切り替えボタンも消す
           document.getElementById("Loading").style.display = "none";
@@ -191,13 +207,14 @@
       });
       //接続された側のみ実行
       this.peer.on('call', call => {
-        call.answer(this.localStream);
-        this.connect(call);
-        this.setOpponentPeerId();
+        call.answer(this.localStream)
+        this.connect(call)
+        this.getOpponentInfo()
+        this.ToMatch()
       });
-      this.searchOpponent();
+      this.searchOpponent()
     },
-  })
+    })
 </script>
 
 
@@ -205,31 +222,29 @@
       #app{
         text-align: center;
       }
-      .container {
-        min-height: 10vh;
-        margin: 10px;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-      }
-      h1 {
-        font-weight: 400;
-      }
-      .name {
-        color: #ff00ff;
-      }
-      .my-screen {
-        float: left;
-        margin: 0px;
-      }
-      .opponent-screen {
-        float: right;
-        margin: 0px;
-      }
       .audio {
-        margin-bottom: 20px;
+      }
+      .switching-part {
+        height: 30vh;
+        padding-bottom: 30vw;
       }
       .room-info {
-        margin-bottom: 20px;
+        font-size: 1.5vw;
+        padding-top: 45%;
+        padding-bottom: 45%;
+      }
+      .matching-now {
+        padding-top:30%;
+      }
+      .loadimg {
+        width: 27vw;
+        margin-top: 6vw;
+      }
+      .loadmsg {
+        font-size: 1.5vw;
+      }
+      .button {
+        width: 70%;
+        padding: 2vh;
       }
     </style>
