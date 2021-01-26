@@ -1,8 +1,8 @@
 <template>
   <ul class="col3">
-    <li id="listen-img-unselect"></li>
+    <li id="listen-img-unselect"><figcaption id="listner-name"></figcaption></li>
     <li class="container"><Nuxt /></li>
-    <li id="talk-img-unselect"></li>
+    <li id="talk-img-unselect"><figcaption id="talker-name"></figcaption></li>
   </ul>
 </template>
 
@@ -38,7 +38,7 @@ li {
 }
 
 li {
-  background: rgb(228, 228, 228);
+  background: rgba(159, 176, 212, 0.205);
   text-align: center;
   padding: 20px 0;
   border: 1px solid #fff;
@@ -51,7 +51,7 @@ li {
 .listen-img-select {
   background-image: url("../img/listen.png");
   background-size: 100% 100%;
-  background-color: darkorange;
+  background-color: #ff8800;
 }
 
 #talk-img-unselect {
@@ -61,7 +61,7 @@ li {
 .talk-img-select {
   background-image: url("../img/talk.png");
   background-size: 100% 100%;
-  background-color: darkorange;
+  background-color: #ff8800;
 }
 
 .container {
@@ -75,6 +75,13 @@ li {
   background-color: white;
 }
 
+
+#listner-name,
+#talker-name {
+  margin-top: -1.3vw;
+  font-size: 3vw;
+}
+
 *,
 *:before,
 *:after {
@@ -85,38 +92,44 @@ li {
 .button-talk {
   display: inline-block;
   border-radius: 4px;
+  color: #ff8800;
   border: 1px solid #ffffff;
   text-decoration: none;
 }
 .button-talk:hover {
   color: #fff;
-  background-color: #ffa500;
+  background-color: #ff8800;
 }
 
 .button-listen {
   display: inline-block;
   border-radius: 4px;
+  color: #ff8800;
   border: 1px solid #ffffff;
   text-decoration: none;
 }
 .button-listen:hover {
   color: #fff;
-  background-color: #ffa500;
+  background-color: #ff8800;
 }
 .button-push {
   color: #fff;
-  background-color: #ffa500;
+  background-color: #ff8800;
 
 }
 .button {
   display: inline-block;
-  border-radius: 4px;
-  border: 1px solid #ffffff;
-  color: #ffa500;
-  text-decoration: none;
+  border: none;
+  border-radius: 10%;
+  color: #ff8800;
+  background-color: rgba(240, 238, 238, 0.61);
+  box-shadow   : 0.2vw 0.2vw 0.2vw #666666;
 }
 .button:hover {
   color: #fff;
-  background-color: #ffa500;
+  background-color: #ff8800;
+}
+.button:active {
+  box-shadow   : 0.1vw 0.1vw 0.1vw #666666;
 }
 </style>

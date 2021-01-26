@@ -33,6 +33,7 @@
                    v-on:click="toListenMode()"
                    value="聞く"
                    id="button-listen"
+                   class="button-listen"
                    style="width: 35%; height: 60px; font-size: 1.5vw" />
           </span>
           <span id="talk">
@@ -40,6 +41,7 @@
                    v-on:click="toTalkMode()"
                    value="話す"
                    id="button-talk"
+                   class="button-talk"
                    style="width: 35%; height: 60px; font-size: 1.5vw" />
           </span>
         </div>
@@ -47,13 +49,13 @@
         <div class="start">
           <input type="submit"
                  v-if="!isWaiting"
-                 id="button"
+                 class="button"
                  target="_blank"
                  value="マッチング開始"
                  style="width: 90%; height: 70px; font-size: 1.5vw" />
           <input type="submit"
                  v-if="isWaiting"
-                 id="button"
+                 class="button"
                  target="_blank"
                  value="待機中..."
                  style="width: 90%; height: 70px; font-size: 1.5vw" />
@@ -171,10 +173,11 @@
   .name {
   }
   .form-control {
-    font-size: 20px;
+    font-size: 1vw;
   }
   .audio {
     margin-top: 20px;
+    font-size: 1vw;
   }
   .choose-audio {
     width: 80%;
