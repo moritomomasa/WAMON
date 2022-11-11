@@ -1,7 +1,7 @@
 <template>
     <div id="app">
-      <!--タイトル-->
-      <h1 class="title">承認<span class="title-back">欲求</span></h1>
+      <!-- タイトル -->
+      <h1 class="title">WA<span class="title-back">MON</span></h1>
       <h2 class="subtitle">聞きたいこと 話したい思い</h2>
 
       <!--フォーム(名前)-->
@@ -169,8 +169,6 @@
   .form {
     width: 70%;
     margin: auto;
-  }
-  .name {
   }
   .form-control {
     font-size: 1vw;

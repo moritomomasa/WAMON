@@ -1,21 +1,20 @@
-# desire
+# WAMON
 
-## Build Setup
+#### WAMON とは？
 
-```bash
-# install dependencies
-$ npm install
+##### 話し手(話:WA)と聞き手(聞:MON)に分かれて知らない人とリアルタイムで通話をすることができる Web サービスです！
 
-# serve with hot reload at localhost:3000
-$ npm run dev
+<br>
 
-# build for production and launch server
-$ npm run build
-$ npm run start
+#### 詳細
 
-# generate static project
-$ npm run generate
-```
-
-For detailed explanation on how things work, check out [Nuxt.js docs](https://nuxtjs.org).
-"# desire" 
+<table>
+  <tr>
+    <td> 使用技術 </td> <td>Vue.js (Nxut.js)、WebRTC、FireBase</td>
+  </tr>
+  <tr>
+    <td> 開発期間 </td> <td>6カ月</td>
+  </tr>
+  <tr>
+    <td> デプロイURL </td> <td>https://ww.co.jp</td>
+</table>
