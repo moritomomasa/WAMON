@@ -1,5 +1,5 @@
 <!--
-  説明：マッチング設定入力ページ
+  説明：マッチング前ページ
 -->
 <template>
     <div id="app">
@@ -22,10 +22,9 @@
           <!-- タイトル -->
           <div class="form-title">{{ labels.deviceForm }}</div>
           <!-- デバイス選択 -->
-          {{userModel.selectedAudio}}
           <select class="choose-audio" v-model="userModel.selectedAudio">
             <option disabled value="">{{ labels.unselected }}</option>
-            <option v-for="(audio, key, index) in audios" :key="index" :value="audio.value">
+            <option v-for="(audio, index) in audios" :key="index" :value="audio.value">
               {{ audio.text }}
             </option>
           </select>
@@ -69,7 +68,6 @@
 <script>
   // ユーザー名の文字数上限
   const MAX_USER_NAME_LENGTH = 10
-
   // ラベル・メッセージモデル
   const LABELS = {
     titleFront: 'WA',
@@ -83,7 +81,6 @@
     matchWaitMsg:  '待機中...',
     validErrMsg: '入力に不備があります'
   }
-
   // ユーザーモデル
   const initialUserModel = {
     // ユーザー名
@@ -115,10 +112,16 @@
         isWaiting: false,
       };
     },
-    mounted () {
+    mounted: async function () {
+      const deviceInfos = (await navigator.mediaDevices.enumerateDevices());
+      //オーディオデバイス取得
+      deviceInfos.filter(deviceInfo => deviceInfo.kind === 'audioinput').map(audio => this.audios.push({text: audio.label || 'Microphone' + (this.audios.length + 1), value: audio.deviceId}));
+      console.log(deviceInfos)
+      //カメラ取得
+      //deviceInfos.filter(deviceInfo => deviceInfo.kind === 'videoinput').map(video => this.videos.push({text: video.label || 'Camera' + (this.videos.length + 1), value: video.deviceId}));
     },
     computed: {
-      //* 選択中のマッチタイプのボタンのスタイル設定 */
+      //* 選択中のマッチタイプのボタンスタイル */
       activeTypeStyle: function(){
         return {
             color: '#fff',
@@ -127,36 +130,24 @@
       }
     },
     methods: {
-      //** */
+      //* マッチングタイプを切り替える */
       changeType: function () {
         this.userModel.isTalk = !this.userModel.isTalk
+        if (this.userModel.isTalk == true) this._toTalkMode()
+        else this._toListenMode()
       },
-      toListenMode: function () {
-        if(this.isWaiting == false){
-          this.type = "listen";
-          document.getElementById("button-listen").className =
-            "button-push";
-          document.getElementById("button-talk").className =
-            "button-talk";
-
-          document.getElementById("listen-img-unselect").className =
-            "listen-img-select";
-          document.getElementById("talk-img-unselect").className =
-            "talk-img-unselect";
+      //* 話す→聞くに変更 */
+      _toListenMode: function () {
+        if (!this.isWaiting) {
+          document.getElementById("listen-img-unselect").className = 'listen-img-select'
+          document.getElementById("talk-img-unselect").className = 'talk-img-unselect'
         }
       },
-      toTalkMode: function () {
-        if(this.isWaiting == false){
-          this.type = "talk";
-          document.getElementById("button-talk").className =
-            "button-push";
-          document.getElementById("button-listen").className =
-            "button-listen";
-
-          document.getElementById("listen-img-unselect").className =
-            "listen-img-unselect";
-          document.getElementById("talk-img-unselect").className =
-            "talk-img-select";
+      //* 聞く→話すに変更 */
+      _toTalkMode: function () {
+        if (!this.isWaiting) {
+          document.getElementById("listen-img-unselect").className = 'listen-img-unselect'
+          document.getElementById("talk-img-unselect").className = 'talk-img-select'
         }
       },
       canMatching: async function() {
@@ -172,19 +163,13 @@
           setTimeout(this.moveToMatching, 0*1000);
         }
       },
+      //* マッチング画面へ移行 */
       moveToMatching: function() {
         if (this.isWaiting == true) {
           const link = "matching?type="+this.userModel.isTalk+"&name="+this.userModel.userName+"&audio="+this.userModel.selectedAudio
           this.$router.replace(link)
         }
       },
-    },
-    mounted: async function () {
-      const deviceInfos = (await navigator.mediaDevices.enumerateDevices());
-      //オーディオデバイス取得
-      deviceInfos.filter(deviceInfo => deviceInfo.kind === 'audioinput').map(audio => this.audios.push({text: audio.label || 'Microphone' + (this.audios.length + 1), value: audio.deviceId}));
-      //カメラ取得
-      //deviceInfos.filter(deviceInfo => deviceInfo.kind === 'videoinput').map(video => this.videos.push({text: video.label || 'Camera' + (this.videos.length + 1), value: video.deviceId}));
     }
   };
 </script>

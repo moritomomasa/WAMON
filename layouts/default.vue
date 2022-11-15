@@ -1,6 +1,6 @@
 <template>
   <ul class="col3">
-    <li id="listen-img-unselect"><figcaption id="listner-name"></figcaption></li>
+    <li id="listen-img-unselect" class="listen-img-select"><figcaption id="listner-name"></figcaption></li>
     <li class="container"><Nuxt /></li>
     <li id="talk-img-unselect"><figcaption id="talker-name"></figcaption></li>
   </ul>
@@ -32,8 +32,7 @@ html {
 ul,
 li {
   padding-left: 0;
-  margin-top: 0;
-  margin-bottom: 0;
+  margin: 0;
   list-style: none;
 }
 
@@ -87,11 +86,6 @@ li {
 *:after {
   box-sizing: border-box;
   margin: 0;
-}
-
-.btn-push {
-  color: #fff;
-  background-color: #ff8800;
 }
 
 .btn {

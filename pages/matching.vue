@@ -2,335 +2,278 @@
   説明：マッチング中ページ
 -->
 <template>
-  <client-only>
-    <slick>
-    <div id="app">
-      <span v-if="isMatch">
-        <span v-if="you.type == 'listen'" v-on="displayName(you.name,opponent.name)"></span>
-        <span v-else v-on="displayName(opponent.name,you.name)"></span>
-      </span>
-
-      <!--オーディオ-->
-      <audio id="audio"></audio>
-
-      <div class="switching-part">
-        <!--マッチ相手探し中に表示-->
-        <div id="Loading" style="display:block">
-          <img src="../img/loading.gif" class="loadimg">
-          <p class="loadmsg">
-            マッチング相手を探しています...
-          </p>
-        </div>
-
-        <!--マッチング中に表示-->
-        <div id="matching" style="display:none">
-          <div class="main">
-            <div class="room-info">
-            </div>
-          </div>
-        </div>
-
-        <!--時間経過-->
-        <div class="count">
-          <span v-if="isMatch">
-            {{hour}} : {{min}} : {{sec}}
-          </span>
-          <span v-else>
-          </span>
-        </div>
-      </div>
-
-      <!--<button @click="ToMatch" class="button">切り替え</button>-->
-
-      <!--ボタン-->
-      <div class="button-area">
-        <div v-if="!isMute">
-          <img src="../img/mike-on.png" class="button button-mute" @click="mute" alt="mute">
-        </div>
-        <div v-else>
-          <img src="../img/mike-off.png" class="button button-mute" @click="mute" alt="mute">
-        </div>
-        <button @click="disconnect" class="button button-disc">切断</button>
-      </div>
-
+  <div id="app">
+    <!-- ユーザー情報 -->
+    <span v-if="isMatch">
+      <span v-if="you.type == 'listen'" v-on="reflectDisplayName(you.name, partner.name)"></span>
+      <span v-else v-on="reflectDisplayName(partner.name, you.name)"></span>
+    </span>
+    <!-- マッチ相手探し中 -->
+    <div v-if="!isMatch">
+      <img src="../img/loading.gif" class="loading">
+      <p class="loading-msg">{{ labels.searchTalkPartnerMsg }}</p>
     </div>
-    </slick>
-  </client-only>
+    <!-- 時間経過 -->
+    <div v-show="isMatch" class="countTalkTime">{{ talkTimeHMS }}</div>
+    <!-- ミュートボタン -->
+    <div>
+      <img v-if="!isMute" src="../img/mike-on.png" class="button mike-btn" @click="switchMute()" alt="mike-on">
+      <img v-else src="../img/mike-off.png" class="button mike-btn" @click="switchMute()" alt="mike-off">
+    </div>
+    <!-- 切断ボタン -->
+    <button @click="disconnect" class="btn">{{ labels.disconnect }}</button>
+    <!-- オーディオ -->
+    <audio id="audio"></audio>
+  </div>
 </template>
-
 
 <script>
   import firebase from '@/plugins/firebase'
-import Peer from 'skyway-js'
+  import Peer from 'skyway-js'
+
+  // API
+  const API_KEY = 'cdcf59b1-9f67-452d-a607-18fc887dc36c'
+  // ラベル・メッセージモデル
+  const LABELS = {
+    disconnect: '切断',
+    searchTalkPartnerMsg: 'マッチング相手を探しています...'
+  }
+  // あなたの情報の初期化
+  const initYou = {
+    peerId: '',
+    name: '',
+    type: '',
+    selectedAudio: null,
+    selectedVideo: null
+  }
+  // 相手の情報の初期化
+  const initPartner = {
+    peerId: '',
+    name: '',
+    type: ''
+  }
+  // 時間情報の初期化
+  const initTime = {
+    start: 0,
+    hour: 0,
+    min: 0,
+    sec: 0
+  }
 
   export default({
-    components: {
-    },
     data() {
       return {
-        APIKey: 'cdcf59b1-9f67-452d-a607-18fc887dc36c',
-        selectedAudio: this.$route.query.audio,
-        selectedVideo: null,
-        audios: [],
-        videos: [],
+        // ラベル・メッセージ
+        labels: LABELS,
+        // あなたの情報
+        you: initYou,
+        // 相手の情報
+        partner: initPartner,
+        // 経過時間
+        time: initTime,
+        // webRTCのAPIキー
+        APIKey: API_KEY,
+        // デバイスのストリーム
         localStream: null,
-        audioTrack: null,
+        // マイクのオンオフ(デフォルトはオン)
         isMute: false,
+        // 会話中かどうか
         isMatch: false,
-
-        //経過時間
-        start: 0,
-        hour: 0,
-        min: 0,
-        sec: 0,
-        now: 0,
-        datet: 0,
-
-        //あなたの情報
-        you: {
-          peerId: '',
-          name: this.$route.query.name,
-          type: this.$route.query.type,
-        },
-        //相手の情報
-        opponent: {
-          peerId: '',
-          name: '',
-          type: '',
-        },
       }
     },
-    methods: {
-      //ミュートの切り替え
-      mute: function() {
-        if (this.localStream) {
-          const audioTrack = this.localStream.getAudioTracks()[0]
-          this.isMute = !this.isMute
-          audioTrack.enabled = !this.isMute
-        }
-      },
-      //audio,videoの変更
-      onChange: function () {
-        this.connectLocalCamera();
-        this.makeCall();
-      },
-      //audio,videoの接続
-      connectLocalCamera: async function () {
-        const constraints = {
-          audio: this.selectedAudio ? { deviceId: { exact: this.selectedAudio } } : true,
-          video: this.selectedVideo ? { deviceId: { exact: this.selectedVideo } } : false
-        }
-        const stream = await navigator.mediaDevices.getUserMedia(constraints);
-        this.localStream = stream;
-      },
-      //マッチング
-      makeCall:　function () {
-        const call = this.peer.call(this.opponent.peerId, this.localStream);
-        this.connect(call);
-      },
-      //相手のaudio,videoの取得
-      connect: function (call) {
-        call.on('stream', stream => {
-          const el = document.getElementById('audio');
-          el.srcObject = stream;
-          el.play();
-        });
-      },
-      //相手を探す
-      searchOpponent: async function (){
-        let getId = 'null';
-        let getName;
-        let getKey = 'null';
-        let getType = 'null';
-
-        if(this.you.type == 'talk'){
-            await firebase.database().ref('listen')
-              .once('value',function(snapshot) {
-                snapshot.forEach(function (childSnapshot) {
-                  const value = childSnapshot.val();
-                  getId = childSnapshot.key;
-                  getName = value.name;
-                  getType = 'listen';
-                  return;
-                });
-              });
-        }
-        else if(this.you.type == 'listen'){
-            await firebase.database().ref('talk')
-              .once('value',function(snapshot) {
-                snapshot.forEach(function (childSnapshot) {
-                  const value = childSnapshot.val();
-                  getId = childSnapshot.key;
-                  getName = value.name;
-                  getType = 'talk';
-                  return;
-                });
-              });
-        }
-        this.opponent.peerId =　getId
-        this.opponent.name =　getName
-        this.opponent.type = getType
-
-        //相手がいたら
-        if(this.opponent.peerId != 'null'){
-          this.isMatch = true
-          this.setMatchingData()
-          this.makeCall()
-          this.removeData(this.you.type, this.you.peerId)
-          this.removeData(this.opponent.type, this.opponent.peerId)
-          this.ToMatch()
-          this.start = new Date()
-          this.count()
-        }
-      },
-      //マッチ相手の情報取得
-      getOpponentInfo:async function () {
-        const yourId = this.you.peerId
-        let opponentId,opponentName
-        await firebase.database().ref('matching').once('value',function(snapshot) {
-          snapshot.forEach(function (childSnapshot) {
-          const val = childSnapshot.val();
-          console.log(val.name);
-          if(val.id == yourId){
-            opponentId = childSnapshot.key;
-            opponentName = val.name;
-          }
-          return;
-          });
-        });
-        this.opponent.peerId = opponentId
-        this.opponent.name = opponentName
-      },
-      displayName: function (listner,talker) {
-        var listnerSpace = document.getElementById("listner-name")
-        var talkerSpace = document.getElementById("talker-name")
-        listnerSpace.innerHTML = listner
-        talkerSpace.innerHTML = talker
-      },
-      setMatchingData:async function () {
-        if(this.you.peerId) {
-          await firebase.database().ref('matching/' + this.you.peerId).set({
-            id: this.opponent.peerId,
-            name: this.you.name
-          });
-        }
-      },
-      //データベースの削除
-      removeData: function (type, id) {
-        firebase.database().ref(type + '/' + id).remove();
-      },
-      //データベースの取得
-      fetchData: function (type, id) {
-      },
-      count: function () {
-	      this.now = new Date();
-
-	      this.datet = parseInt((this.now.getTime() - this.start.getTime()) / 1000);
-
-	      this.hour = parseInt(this.datet / 3600);
-	      this.min = parseInt((this.datet / 60) % 60);
-	      this.sec = this.datet % 60;
-
-	      // 数値が1桁の場合、頭に0を付けて2桁で表示する指定
-	      if(this.hour < 10) { this.hour = "0" + this.hour; }
-	      if(this.min < 10) { this.min = "0" + this.min; }
-	      if(this.sec < 10) { this.sec = "0" + this.sec; }
-
-	      setTimeout(this.count, 1000);
-　　　},
-      // 切断ボタン
-      disconnect:async function () {
-        this.leavePage()
-        location.replace('/');
-      },
-      ToMatch:async function () {//テスト用 切り替えボタンも消す
-          document.getElementById("Loading").style.display = "none";
-          document.getElementById("matching").style.display = "block";
-      },
-      ToWait:async function () {//テスト用
-          document.getElementById("Loading").style.display = "block";
-          document.getElementById("matching").style.display = "none";
-      },
-      //ページを離れたら
-      leavePage: function () {
-        this.removeData('matching', this.you.peerId);
-        this.removeData('matching', this.opponent.peerId);
-        this.removeData(this.you.type, this.you.peerId);
-        this.peer.destroy();
-      },
-    },
     mounted: async function () {
-      //ページを離れる前に実行
-      window.onbeforeunload = this.leavePage;
-
-      this.connectLocalCamera()
-
-      //①peerkey取得
+      // youオブジェクトの初期化
+      this.you = {
+        name: this.$route.query.name,
+        type: this.$route.query.type,
+        selectedAudio: this.$route.query.audio
+      }
+      // ページを離れる前に実行
+      window.onbeforeunload = this.beforeLeave
+      // デバイスへ接続
+      this.connectDevice()
+      // 1.peerkey取得
       this.peer = new Peer({
         key: this.APIKey,
         debug: 3,
-      });
-      //②固有のid取得
+      })
+      // 2.固有のid取得
       this.peer.on('open', () => {
         this.you.peerId = this.peer.id
         firebase.database().ref(this.you.type + '/' + this.you.peerId).set({
           name: this.you.name,
-        });
-      });
-      //接続された側のみ実行
+        })
+      })
+      // すでに待機中だった人がいた場合に発火
       this.peer.on('call', call => {
         this.isMatch = true
         call.answer(this.localStream)
-        this.connect(call)
-        this.getOpponentInfo()
-        this.ToMatch()
+        this.connectPartnerDevice(call)
+        this.getPartnerInfo()
         this.start = new Date()
-        this.count()
-      });
-
-      this.searchOpponent()
+        this.countTalkTime()
+      })
+      // 待機中の人がいない場合は会話相手を探す
+      this.searchPartner()
     },
+    computed: {
+      //* 会話時間'時：分：秒' */
+      talkTimeHMS: function() {
+        // 数値が1桁の場合、頭に0を付けて2桁で表示する指定
+        if(this.hour < 10) this.hour = '0' + this.hour
+	      if(this.min < 10) this.min = '0' + this.min
+	      if(this.sec < 10) this.sec = '0' + this.sec
+        return this.hour + ' : ' + this.min + ' : ' + this.sec
+      }
+    },
+    methods: {
+      //* マッチしたら画面にニックネームを表示する */
+      reflectDispName: function (listner, talker) {
+        document.getElementById("listner-name").innerHTML = listner
+        document.getElementById("talker-name").innerHTML = talker
+      },
+      //* 自信のデバイスの定義 */
+      connectDevice: async function () {
+        const constraints = {
+          audio: this.you.selectedAudio ? { deviceId: { exact: this.you.selectedAudio } } : true,
+          video: this.you.selectedVideo ? { deviceId: { exact: this.you.selectedVideo } } : false
+        }
+        const stream = await navigator.mediaDevices.getUserMedia(constraints)
+        this.localStream = stream
+      },
+      //* 相手のデバイスの接続 */
+      connectPartnerDevice: function (call) {
+        call.on('stream', stream => {
+          const el = document.getElementById('audio')
+          el.srcObject = stream
+          el.play()
+        })
+      },
+      //* お互いのデバイスを接続する */
+      makeCall: function () {
+        const call = this.peer.call(this.partner.peerId, this.localStream)
+        this.connectPartnerDevice(call)
+      },
+      //* 相手を探す */
+      searchPartner: async function (){
+        if (this.you.type == 'talk') {
+            await firebase.database().ref('listen')
+              .once('value',function(snapshot) {
+                snapshot.forEach(function (childSnapshot) {
+                  const value = childSnapshot.val()
+                  this.partner.peerId = childSnapshot.key
+                  this.partner.name = value.name
+                  this.partner.type = 'listen'
+                  return
+                })
+              })
+        }
+        else if (this.you.type == 'listen') {
+            await firebase.database().ref('talk')
+              .once('value',function(snapshot) {
+                snapshot.forEach(function (childSnapshot) {
+                  const value = childSnapshot.val()
+                  this.partner.peerId = childSnapshot.key
+                  this.partner.name = value.name
+                  this.partner.type = 'talk'
+                  return
+                })
+              })
+        }
+        // 相手がいたら
+        if (this.partner.peerId) {
+          this.isMatch = true
+          // 会話中データベースに移行
+          this.switchMatchingData()
+          // 待機データベースから2人のデータを削除
+          this.removeData(this.you.type, this.you.peerId)
+          this.removeData(this.partner.type, this.partner.peerId)
+          // お互いのオーディオを接続
+          this.makeCall()
+          // 会話時間の追跡開始
+          this.start = new Date()
+          this.countTalkTime()
+        }
+      },
+      //* 相手の情報取得 */
+      getPartnerInfo: async function () {
+        await firebase.database().ref('matching').once('value', function(snapshot) {
+          snapshot.forEach(function (childSnapshot) {
+            if(childSnapshot.val().id == this.you.peerId){
+              this.partner.peerId = childSnapshot.key
+              this.partner.name = childSnapshot.val().name
+            }
+          return
+          })
+        })
+      },
+      //* 会話中データベースに移行 */
+      switchMatchingData : async function () {
+        if(this.you.peerId) {
+          await firebase.database().ref('matching/' + this.you.peerId).set({
+            id: this.partner.peerId,
+            name: this.you.name
+          })
+        }
+      },
+      //* データベースの削除 */
+      removeData: function (type, id) {
+        firebase.database().ref(type + '/' + id).remove()
+      },
+      //* ミュートの切り替え */
+      switchMute: function() {
+        if (this.localStream) {
+          this.isMute = !this.isMute
+          this.localStream.getAudioTracks()[0].enabled = !this.isMute
+        }
+      },
+      //* 会話の切断 */
+      disconnect : async function () {
+        this.beforeLeave()
+        location.replace('/')
+      },
+      //* 会話の切断前に必ず実行する */
+      beforeLeave : function () {
+        this.removeData('matching', this.you.peerId)
+        this.removeData('matching', this.partner.peerId)
+        this.removeData(this.you.type, this.you.peerId)
+        this.peer.destroy()
+      },
+      //* 経過時間をHMSで計算 */
+      countTalkTime: function () {
+	      this.datet = parseInt((new Date().getTime() - this.start.getTime()) / 1000)
+	      this.hour = parseInt(this.datet / 3600)
+	      this.min = parseInt((this.datet / 60) % 60)
+	      this.sec = this.datet % 60
+	      setTimeout(this.countTalkTime, 1000)
+      },
+    }
     })
 </script>
 
+<style scoped>
+  #app{
+    text-align: center;
+  }
 
-    <style scoped>
-      #app{
-        text-align: center;
-      }
-      .audio {
-      }
-      .count {
-        font-size: 2vw;
-      }
-      .switching-part {
-        height: 30vh;
-        padding-bottom: 27vw;
-      }
-      .room-info {
-        font-size: 1.5vw;
-        padding-top: 20%;
-        padding-bottom: 20%;
-      }
-      .loadimg {
-        width: 27vw;
-        margin-top: 6vw;
-      }
-      .loadmsg {
-        font-size: 1.5vw;
-      }
-      .button-area {
-      }
-      .button-mute {
-        width: 22%;
-        border-radius: 50%;
-        border-color: black;
-        padding: 1vh;
-        margin-bottom: 6vw;
-      }
-      .button-disc {
-        width: 65%;
-        padding: 1.5vh;
-        font-size: 2vw;
-      }
-    </style>
+  .countTalkTime {
+    font-size: 2vw;
+  }
+
+  .loading {
+    width: 27vw;
+    margin-top: 6vw;
+  }
+
+  .loading-msg {
+    font-size: 1.5vw;
+  }
+
+  .mike-btn {
+    width: 22%;
+    border-radius: 50%;
+    border-color: black;
+    padding: 1vh;
+    margin-bottom: 6vw;
+  }
+</style>
