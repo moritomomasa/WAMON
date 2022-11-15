@@ -21,7 +21,9 @@
         <div class="device-block">
           <!-- タイトル -->
           <div class="form-title">{{ labels.deviceForm }}</div>
-          <select class="choose-audio" v-model="selectedAudio">
+          <!-- デバイス選択 -->
+          {{userModel.selectedAudio}}
+          <select class="choose-audio" v-model="userModel.selectedAudio">
             <option disabled value="">{{ labels.unselected }}</option>
             <option v-for="(audio, key, index) in audios" :key="index" :value="audio.value">
               {{ audio.text }}
@@ -35,29 +37,27 @@
           <!-- 話す・聞くボタン -->
           <input type="button"
                  class="match-type-btn btn"
-                 :style="cntTypeStyle"
                  value="聞く"
-                 @click="changeType()"
-                 id="button-listen"/>
+                 :style="userModel.isTalk == false ? activeTypeStyle : null"
+                 @click="userModel.isTalk == false ? null : changeType()"/>
           <input type="button"
                  class="match-type-btn btn"
-                 :cstyle="cntTypeStyle"
                  value="話す"
-                 @click="changeType()"
-                 id="button-talk"/>
+                 :style="userModel.isTalk == false ? null : activeTypeStyle"
+                 @click="userModel.isTalk == false ? changeType() : null"/>
         </div>
       <!-- マッチ開始ボタン -->
         <div class="start">
           <input v-if="!isWaiting"
                  type="submit"
                  class="match-btn btn"
-                 target="_blank"
-                 value="マッチング開始"/>
+                 :value="labels.matchStartMsg"
+                 target="_blank"/>
           <input v-else
                  type="submit"
                  class="match-btn btn"
-                 target="_blank"
-                 value="待機中..."/>
+                 :value="labels.matchWaitMsg"
+                 target="_blank"/>
           <!-- 入力に不備があった時に表示 -->
           <div v-if="hasError" style="color: red">{{ labels.validErrMsg }}</div>
         </div>
@@ -79,6 +79,8 @@
     deviceForm: '使用デバイス選択',
     unselected: '未選択',
     matchTypeForm: 'タイプ選択',
+    matchStartMsg: 'マッチング開始',
+    matchWaitMsg:  '待機中...',
     validErrMsg: '入力に不備があります'
   }
 
@@ -87,7 +89,7 @@
     // ユーザー名
     userName: '',
     // 話す側かどうか
-    isTalk: '',
+    isTalk: false,
     // 使用するオーディオ
     selectedAudio: '',
     // 使用するカメラ ※現在は未使用
@@ -116,14 +118,9 @@
     mounted () {
     },
     computed: {
-      cntTypeStyle: function(){
-        return this.userModel.isTalk === true ?
-          {// 話すモードの場合
-            color: '#fff',
-            backgroundColor: '#ff8800'
-          }
-          :
-          {// 話すモードでない場合
+      //* 選択中のマッチタイプのボタンのスタイル設定 */
+      activeTypeStyle: function(){
+        return {
             color: '#fff',
             backgroundColor: '#ff8800'
           }
@@ -163,13 +160,14 @@
         }
       },
       canMatching: async function() {
-        if (this.name === "" || this.type === "" || this.userModel.selectedAudio === "") {
+        console.log(this.userModel)
+        if (this.userModel.userName === "" || this.userModel.selectedAudio === "") {
           // 入力フォームのいづれかが未入力であった場合
           this.hasError = true
         } 
         else {
           // マッチング画面へ遷移
-          this.isWaiting = !this.isWaiting;
+          this.isWaiting = true;
           this.hasError = false
           setTimeout(this.moveToMatching, 0*1000);
         }
