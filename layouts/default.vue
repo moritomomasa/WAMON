@@ -89,29 +89,6 @@ li {
   margin: 0;
 }
 
-.btn-talk {
-  display: inline-block;
-  border-radius: 4px;
-  color: #ff8800;
-  border: 1px solid #ffffff;
-  text-decoration: none;
-}
-.btn-talk:hover {
-  color: #fff;
-  background-color: #ff8800;
-}
-
-.btn-listen {
-  display: inline-block;
-  border-radius: 4px;
-  color: #ff8800;
-  border: 1px solid #ffffff;
-  text-decoration: none;
-}
-.btn-listen:hover {
-  color: #fff;
-  background-color: #ff8800;
-}
 .btn-push {
   color: #fff;
   background-color: #ff8800;
@@ -122,13 +99,13 @@ li {
   border: none;
   color: #ff8800;
   background-color: rgba(240, 238, 238, 0.61);
-  box-shadow   : 0.2vw 0.2vw 0.2vw #666666;
+  box-shadow   : 0.2vw 0.2vw 0.2vw #858585;
 }
 .btn:hover {
   color: #fff;
   background-color: #ff8800;
 }
 .btn:active {
-  box-shadow   : 0.1vw 0.1vw 0.1vw #666666;
+  box-shadow   : 0.1vw 0.1vw 0.1vw #858585;
 }
 </style>

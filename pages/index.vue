@@ -32,20 +32,19 @@
         <div class="match-type-block">
           <!-- タイトル -->
           <div class="form-title">{{ labels.matchTypeForm }}</div>
-          <span id="listen">
-            <input type="button"
-                   class="button-listen match-type-btn btn"
-                   @click="changeType()"
-                   value="聞く"
-                   id="button-listen"/>
-          </span>
-          <span id="talk">
-            <input type="button"
-                   class="button-talk match-type-btn btn"
-                   @click="changeType()"
-                   value="話す"
-                   id="button-talk"/>
-          </span>
+          <!-- 話す・聞くボタン -->
+          <input type="button"
+                 class="match-type-btn btn"
+                 :style="cntTypeStyle"
+                 value="聞く"
+                 @click="changeType()"
+                 id="button-listen"/>
+          <input type="button"
+                 class="match-type-btn btn"
+                 :cstyle="cntTypeStyle"
+                 value="話す"
+                 @click="changeType()"
+                 id="button-talk"/>
         </div>
       <!-- マッチ開始ボタン -->
         <div class="start">
@@ -115,6 +114,20 @@
       };
     },
     mounted () {
+    },
+    computed: {
+      cntTypeStyle: function(){
+        return this.userModel.isTalk === true ?
+          {// 話すモードの場合
+            color: '#fff',
+            backgroundColor: '#ff8800'
+          }
+          :
+          {// 話すモードでない場合
+            color: '#fff',
+            backgroundColor: '#ff8800'
+          }
+      }
     },
     methods: {
       //** */
@@ -219,9 +232,10 @@
   }
 
   .match-type-btn {
-    width: 90%;
-    height: 70px;
-    font-size: 1.5vw
+    width: 40%;
+    height: 60px;
+    font-size: 1.0rem;
+    font-weight: 600;
   }
 
   .match-btn {
