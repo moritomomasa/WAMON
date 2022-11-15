@@ -89,47 +89,46 @@ li {
   margin: 0;
 }
 
-.button-talk {
+.btn-talk {
   display: inline-block;
   border-radius: 4px;
   color: #ff8800;
   border: 1px solid #ffffff;
   text-decoration: none;
 }
-.button-talk:hover {
+.btn-talk:hover {
   color: #fff;
   background-color: #ff8800;
 }
 
-.button-listen {
+.btn-listen {
   display: inline-block;
   border-radius: 4px;
   color: #ff8800;
   border: 1px solid #ffffff;
   text-decoration: none;
 }
-.button-listen:hover {
+.btn-listen:hover {
   color: #fff;
   background-color: #ff8800;
 }
-.button-push {
+.btn-push {
   color: #fff;
   background-color: #ff8800;
+}
 
-}
-.button {
+.btn {
   display: inline-block;
   border: none;
-  border-radius: 10%;
   color: #ff8800;
   background-color: rgba(240, 238, 238, 0.61);
   box-shadow   : 0.2vw 0.2vw 0.2vw #666666;
 }
-.button:hover {
+.btn:hover {
   color: #fff;
   background-color: #ff8800;
 }
-.button:active {
+.btn:active {
   box-shadow   : 0.1vw 0.1vw 0.1vw #666666;
 }
 </style>

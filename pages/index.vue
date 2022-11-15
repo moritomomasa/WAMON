@@ -1,66 +1,66 @@
+<!--
+  説明：マッチング設定入力ページ
+-->
 <template>
     <div id="app">
       <!-- タイトル -->
-      <h1 class="title">WA<span class="title-back">MON</span></h1>
-      <h2 class="subtitle">聞きたいこと 話したい思い</h2>
-
-      <!--フォーム(名前)-->
-      <form　@submit.prevent="canMatching" class="form">
-        ニックネーム入力:
-        <span class="name">
-          <input type="name"
-                 class="form-control"
-                 maxlength="10"
-                 v-model="name"
-                 aria-describedby="emailHelp" />
-          {{ name.length }}/10
-        </span>
-      <!--フォーム(デバイス)-->
-        <div class="audio">
-          入力デバイス選択:
-          <select v-model="selectedAudio" @change="" class="choose-audio">
-            <option disabled value="">未選択</option>
-            <option v-for="(audio, key, index) in audios" v-bind:key="index" :value="audio.value">
+      <div class="title">{{ labels.titleFront }}<span style="color: #4169e1">{{ labels.titleBack }}</span></div>
+      <div class="subtitle">{{ labels.subtitle }}</div>
+      <form class="form" @submit.prevent="canMatching">
+        <!-- フォーム：ユーザー名 -->
+        <div class="user-name-block">
+          <!-- タイトル -->
+          <div class="form-title">{{ labels.userNameForm }}</div>
+          <input type="text"
+                 v-model="userModel.userName"
+                 :maxlength="max_user_name_length"/>
+          <!-- -現在の文字数表示 -->
+          <div>{{ userModel.userName.length }}/{{ max_user_name_length }}</div>
+        </div>
+        <!-- フォーム：デバイス選択 -->
+        <div class="device-block">
+          <!-- タイトル -->
+          <div class="form-title">{{ labels.deviceForm }}</div>
+          <select class="choose-audio" v-model="selectedAudio">
+            <option disabled value="">{{ labels.unselected }}</option>
+            <option v-for="(audio, key, index) in audios" :key="index" :value="audio.value">
               {{ audio.text }}
             </option>
           </select>
         </div>
-      <!--フォーム(マッチングタイプ)-->
-        <div class="links">
-          タイプ選択:<br>
+        <!-- フォーム：マッチングタイプ選択 -->
+        <div class="match-type-block">
+          <!-- タイトル -->
+          <div class="form-title">{{ labels.matchTypeForm }}</div>
           <span id="listen">
             <input type="button"
-                   v-on:click="toListenMode()"
+                   class="button-listen match-type-btn btn"
+                   @click="changeType()"
                    value="聞く"
-                   id="button-listen"
-                   class="button-listen"
-                   style="width: 35%; height: 60px; font-size: 1.5vw" />
+                   id="button-listen"/>
           </span>
           <span id="talk">
             <input type="button"
-                   v-on:click="toTalkMode()"
+                   class="button-talk match-type-btn btn"
+                   @click="changeType()"
                    value="話す"
-                   id="button-talk"
-                   class="button-talk"
-                   style="width: 35%; height: 60px; font-size: 1.5vw" />
+                   id="button-talk"/>
           </span>
         </div>
-      <!--マッチ開始ボタン-->
+      <!-- マッチ開始ボタン -->
         <div class="start">
-          <input type="submit"
-                 v-if="!isWaiting"
-                 class="button"
+          <input v-if="!isWaiting"
+                 type="submit"
+                 class="match-btn btn"
                  target="_blank"
-                 value="マッチング開始"
-                 style="width: 90%; height: 70px; font-size: 1.5vw" />
-          <input type="submit"
-                 v-if="isWaiting"
-                 class="button"
+                 value="マッチング開始"/>
+          <input v-else
+                 type="submit"
+                 class="match-btn btn"
                  target="_blank"
-                 value="待機中..."
-                 style="width: 90%; height: 70px; font-size: 1.5vw" />
-          <p v-if="!error" class="error">&nbsp;</p>
-          <p v-if="error" class="error" style="color: red">入力に不備があります</p>
+                 value="待機中..."/>
+          <!-- 入力に不備があった時に表示 -->
+          <div v-if="hasError" style="color: red">{{ labels.validErrMsg }}</div>
         </div>
       </form>
 
@@ -68,22 +68,59 @@
 </template>
 
 <script>
+  // ユーザー名の文字数上限
+  const MAX_USER_NAME_LENGTH = 10
+
+  // ラベル・メッセージモデル
+  const LABELS = {
+    titleFront: 'WA',
+    titleBack: 'MON',
+    subtitle: '聞きたいこと 話したい思い',
+    userNameForm: 'ニックネーム入力',
+    deviceForm: '使用デバイス選択',
+    unselected: '未選択',
+    matchTypeForm: 'タイプ選択',
+    validErrMsg: '入力に不備があります'
+  }
+
+  // ユーザーモデル
+  const initialUserModel = {
+    // ユーザー名
+    userName: '',
+    // 話す側かどうか
+    isTalk: '',
+    // 使用するオーディオ
+    selectedAudio: '',
+    // 使用するカメラ ※現在は未使用
+    selectedCam: ''
+  }
+
   export default {
-    components: {},
     data() {
       return {
-        name: "",
-        type: "",
-        selectedAudio: "",
-        selectedVideo: "",
+        //　ラベル・メッセージ
+        labels: LABELS,
+        // ユーザーの設定情報
+        userModel: initialUserModel,
+        // 使用可能オーディオリスト
         audios: [],
-        videos: [],
-        localStream: null,
-        error: false,
+        // 使用可能カメラリスト
+        cameras: [],
+        // ユーザー名の文字数上限
+        max_user_name_length: MAX_USER_NAME_LENGTH,
+        // 入力不備があるかどうか
+        hasError: false,
+        // マッチング待機状態かどうか
         isWaiting: false,
       };
     },
+    mounted () {
+    },
     methods: {
+      //** */
+      changeType: function () {
+        this.userModel.isTalk = !this.userModel.isTalk
+      },
       toListenMode: function () {
         if(this.isWaiting == false){
           this.type = "listen";
@@ -112,19 +149,21 @@
             "talk-img-select";
         }
       },
-      canMatching:async function() {
-        if (this.name === "" || this.type === "" || this.selectedAudio === "") {
-          this.error = true
-        } else {
+      canMatching: async function() {
+        if (this.name === "" || this.type === "" || this.userModel.selectedAudio === "") {
+          // 入力フォームのいづれかが未入力であった場合
+          this.hasError = true
+        } 
+        else {
+          // マッチング画面へ遷移
           this.isWaiting = !this.isWaiting;
-          this.error = false
+          this.hasError = false
           setTimeout(this.moveToMatching, 0*1000);
         }
       },
       moveToMatching: function() {
-        if(this.isWaiting == true){
-          var link = "matching?type=" + this.type + "&name=" + this.name +
-                     "&audio=" + this.selectedAudio;
+        if (this.isWaiting == true) {
+          const link = "matching?type="+this.userModel.isTalk+"&name="+this.userModel.userName+"&audio="+this.userModel.selectedAudio
           this.$router.replace(link)
         }
       },
@@ -132,54 +171,62 @@
     mounted: async function () {
       const deviceInfos = (await navigator.mediaDevices.enumerateDevices());
       //オーディオデバイス取得
-      deviceInfos
-      .filter(deviceInfo => deviceInfo.kind === 'audioinput')
-      .map(audio => this.audios.push({text: audio.label || 'Microphone' + (this.audios.length + 1), value: audio.deviceId}));
+      deviceInfos.filter(deviceInfo => deviceInfo.kind === 'audioinput').map(audio => this.audios.push({text: audio.label || 'Microphone' + (this.audios.length + 1), value: audio.deviceId}));
       //カメラ取得
-      deviceInfos
-      .filter(deviceInfo => deviceInfo.kind === 'videoinput')
-      .map(video => this.videos.push({text: video.label || 'Camera' + (this.videos.length + 1), value: video.deviceId}));
+      //deviceInfos.filter(deviceInfo => deviceInfo.kind === 'videoinput').map(video => this.videos.push({text: video.label || 'Camera' + (this.videos.length + 1), value: video.deviceId}));
     }
   };
 </script>
 
 <style scoped>
   .title {
-    font-family: "Quicksand", "Source Sans Pro", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
     display: block;
-    font-weight: 400;
-    color: #c71585;
-    letter-spacing: 1px;
+    font-family: "Quicksand", "Source Sans Pro", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
     font-size: 7vw;
+    font-weight: 400;
+    letter-spacing: 1px;
+    color: #c71585;
   }
-  .title-back {
-    color: #4169e1;
-  }
+
   .subtitle {
-    font-weight: 300;
-    font-size: 2vw;
-    color: #b8860b;
-    word-spacing: 5px;
     padding-bottom: 10vh;
+    font-size: 2vw;
+    font-weight: 300;
+    word-spacing: 5px;
+    
   }
-  .links {
-    padding-top: 2vh;
-    padding-bottom: 5vh;
-  }
+
   .form {
     width: 70%;
     margin: auto;
   }
-  .form-control {
-    font-size: 1vw;
+
+  .user-name-block {
+    font-size: 1rem;
   }
-  .audio {
+
+  .device-block {
     margin-top: 20px;
     font-size: 1vw;
   }
+
   .choose-audio {
     width: 80%;
   }
-  .choose-type {
+  
+  .match-type-block {
+    padding: 2vh 0 5vh 0;
+  }
+
+  .match-type-btn {
+    width: 90%;
+    height: 70px;
+    font-size: 1.5vw
+  }
+
+  .match-btn {
+    width: 90%;
+    height: 70px;
+    font-size: 1.5vw
   }
 </style>

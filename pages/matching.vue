@@ -1,4 +1,7 @@
-di<template>
+<!--
+  説明：マッチング中ページ
+-->
+<template>
   <client-only>
     <slick>
     <div id="app">
@@ -58,7 +61,7 @@ di<template>
 
 <script>
   import firebase from '@/plugins/firebase'
-  import Peer from 'skyway-js'
+import Peer from 'skyway-js'
 
   export default({
     components: {
